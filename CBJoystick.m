@@ -38,7 +38,9 @@
 
 - (void)initialize {
     self.backgroundColor = [UIColor clearColor];
-    
+
+    _inteval = 0.05;
+
     deltaFactor = CGPointMake(0, 0);
 
     bgImageView = [[UIImageView alloc] initWithFrame:self.bounds];
@@ -52,9 +54,19 @@
     [self addGestureRecognizer:panGR];
 }
 
+#pragma mark - Properties
+
 - (void)setThumbImage:(UIImage *)thumbImage andBGImage:(UIImage *)bgImage {
     thumbImageView.image = thumbImage;
     bgImageView.image = bgImage;
+}
+
+- (void)setInteval:(CGFloat)newValue {
+    _inteval = newValue;
+    if (_timer) {
+        [self stopUpdating];
+        [self beginUpdating];
+    }
 }
 
 #pragma mark - Gesture Handler
@@ -86,6 +98,9 @@
             deltaFactor.x = (position.x - center.x)/ radius;
             deltaFactor.y = (center.y - position.y)/ radius;
 
+            if (panGR.state == UIGestureRecognizerStateBegan) {
+                [self.delegate joystick:self didBegin:deltaFactor];
+            }
             [self beginUpdating];
         }
             break;
@@ -114,7 +129,7 @@
 
 - (void)beginUpdating {
     if (!_timer) {
-        _timer = [NSTimer scheduledTimerWithTimeInterval:0.016667 target:self selector:@selector(timerHandler) userInfo:nil repeats:YES];
+        _timer = [NSTimer scheduledTimerWithTimeInterval:_inteval target:self selector:@selector(timerHandler) userInfo:nil repeats:YES];
     }
 }
 

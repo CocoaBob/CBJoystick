@@ -10,10 +10,12 @@
 
 @interface CBJoystick : UIView
 @property (nonatomic, weak) IBOutlet id<CBJoystickDelegate> delegate;
+@property (nonatomic, assign) CGFloat inteval;
 - (void)setThumbImage:(UIImage *)thumbImage andBGImage:(UIImage *)bgImage;
 @end
 
 @protocol CBJoystickDelegate <NSObject>
 @optional
+- (void)joystick:(CBJoystick *)aJoystick didBegin:(CGPoint)deltaFactor;
 - (void)joystick:(CBJoystick *)aJoystick didUpdate:(CGPoint)deltaFactor;
 @end
