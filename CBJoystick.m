@@ -12,6 +12,7 @@
     CGPoint deltaFactor;
     UIImageView *thumbImageView;
     UIImageView *bgImageView;
+    BOOL isTouching;
 }
 
 @property (nonatomic) NSTimer *timer;
@@ -37,17 +38,14 @@
 #pragma mark - Initialization
 
 - (void)initialize {
-    self.backgroundColor = [UIColor clearColor];
-
+    _idleAlpha = 0.5;
+    _touchAlpha = 0.75;
     _inteval = 0.05;
 
+    self.alpha = _idleAlpha;
+    self.backgroundColor = [UIColor clearColor];
+
     deltaFactor = CGPointMake(0, 0);
-
-    bgImageView = [[UIImageView alloc] initWithFrame:self.bounds];
-    [self addSubview:bgImageView];
-
-    thumbImageView = [[UIImageView alloc] initWithFrame:CGRectInset(self.bounds, self.bounds.size.width/4, self.bounds.size.height/4)];
-    [self addSubview:thumbImageView];
 
     UIPanGestureRecognizer *panGR = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(panGRHandler:)];
     [panGR setMaximumNumberOfTouches:1];
@@ -57,8 +55,21 @@
 #pragma mark - Properties
 
 - (void)setThumbImage:(UIImage *)thumbImage andBGImage:(UIImage *)bgImage {
-    thumbImageView.image = thumbImage;
+    if (bgImageView)
+        [bgImageView removeFromSuperview];
+    if (thumbImageView)
+        [thumbImageView removeFromSuperview];
+
+    bgImageView = [[UIImageView alloc] initWithFrame:self.bounds];
     bgImageView.image = bgImage;
+    [self addSubview:bgImageView];
+
+    CGFloat thumbImageViewSize = floor(self.bounds.size.width * thumbImage.size.width / bgImage.size.width);
+    thumbImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, thumbImageViewSize, thumbImageViewSize)];
+    thumbImageView.image = thumbImage;
+    [self addSubview:thumbImageView];
+
+    thumbImageView.center = bgImageView.center;
 }
 
 - (void)setInteval:(CGFloat)newValue {
@@ -69,6 +80,16 @@
     }
 }
 
+- (void)setIdleAlpha:(CGFloat)newValue {
+    _idleAlpha = newValue;
+    self.alpha = isTouching?_touchAlpha:_idleAlpha;
+}
+
+- (void)setTouchAlpha:(CGFloat)newValue {
+    _touchAlpha = newValue;
+    self.alpha = isTouching?_touchAlpha:_idleAlpha;
+}
+
 #pragma mark - Gesture Handler
 
 - (void)panGRHandler:(UIPanGestureRecognizer *)panGR {
@@ -76,6 +97,9 @@
         case UIGestureRecognizerStateBegan:
         case UIGestureRecognizerStateChanged:
         {
+            isTouching = YES;
+            self.alpha = _touchAlpha;
+
             CGPoint position = [panGR locationInView:self];
             CGPoint center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
             CGFloat radius = self.bounds.size.width / 2;
@@ -110,6 +134,9 @@
         case UIGestureRecognizerStateFailed:
         default:
         {
+            isTouching = NO;
+            self.alpha = _idleAlpha;
+
             CGPoint selfCenter = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
             thumbImageView.center = selfCenter;
 

@@ -10,6 +10,8 @@
 
 @interface CBJoystick : UIView
 @property (nonatomic, weak) IBOutlet id<CBJoystickDelegate> delegate;
+@property (nonatomic, assign) CGFloat idleAlpha;
+@property (nonatomic, assign) CGFloat touchAlpha;
 @property (nonatomic, assign) CGFloat inteval;
 - (void)setThumbImage:(UIImage *)thumbImage andBGImage:(UIImage *)bgImage;
 @end
