@@ -38,11 +38,12 @@
 #pragma mark - Initialization
 
 - (void)initialize {
-    _idleAlpha = 0.5;
-    _touchAlpha = 0.75;
+    _alphaIdle = 0.5;
+    _alphaTouch = 0.75;
     _inteval = 0.05;
+    _thumbMargin = self.frame.size.width * 0.1;
 
-    self.alpha = _idleAlpha;
+    self.alpha = _alphaIdle;
     self.backgroundColor = [UIColor clearColor];
 
     deltaFactor = CGPointMake(0, 0);
@@ -80,14 +81,14 @@
     }
 }
 
-- (void)setIdleAlpha:(CGFloat)newValue {
-    _idleAlpha = newValue;
-    self.alpha = isTouching?_touchAlpha:_idleAlpha;
+- (void)setAlphaIdle:(CGFloat)newValue {
+    _alphaIdle = newValue;
+    self.alpha = isTouching?_alphaTouch:_alphaIdle;
 }
 
-- (void)setTouchAlpha:(CGFloat)newValue {
-    _touchAlpha = newValue;
-    self.alpha = isTouching?_touchAlpha:_idleAlpha;
+- (void)setAlphaTouch:(CGFloat)newValue {
+    _alphaTouch = newValue;
+    self.alpha = isTouching?_alphaTouch:_alphaIdle;
 }
 
 #pragma mark - Gesture Handler
@@ -98,11 +99,11 @@
         case UIGestureRecognizerStateChanged:
         {
             isTouching = YES;
-            self.alpha = _touchAlpha;
+            self.alpha = _alphaTouch;
 
             CGPoint position = [panGR locationInView:self];
             CGPoint center = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
-            CGFloat radius = self.bounds.size.width / 2;
+            CGFloat radius = self.bounds.size.width * 0.5 - _thumbMargin;
 
             CGFloat deltaX = position.x - center.x;
             CGFloat deltaY = position.y - center.y;
@@ -123,7 +124,9 @@
             deltaFactor.y = (center.y - position.y)/ radius;
 
             if (panGR.state == UIGestureRecognizerStateBegan) {
-                [self.delegate joystick:self didBegin:deltaFactor];
+                if ([self.delegate respondsToSelector:@selector(joystick:didBegin:)]) {
+                    [self.delegate joystick:self didBegin:deltaFactor];
+                }
             }
             [self beginUpdating];
         }
@@ -135,14 +138,18 @@
         default:
         {
             isTouching = NO;
-            self.alpha = _idleAlpha;
+            self.alpha = _alphaIdle;
 
             CGPoint selfCenter = CGPointMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds));
             thumbImageView.center = selfCenter;
 
-            deltaFactor = CGPointZero;
-
             [self stopUpdating];
+
+            if ([self.delegate respondsToSelector:@selector(joystick:didEnd:)]) {
+                [self.delegate joystick:self didEnd:deltaFactor];
+            }
+
+            deltaFactor = CGPointZero;
         }
             break;
     }
@@ -151,7 +158,9 @@
 #pragma mark - Updates
 
 - (void)timerHandler {
-    [self.delegate joystick:self didUpdate:deltaFactor];
+    if ([self.delegate respondsToSelector:@selector(joystick:didUpdate:)]) {
+        [self.delegate joystick:self didUpdate:deltaFactor];
+    }
 }
 
 - (void)beginUpdating {
